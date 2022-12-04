@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/SharinganAi/recipes-api/models"
@@ -103,6 +104,26 @@ func DeleteRecipeHandler(c *gin.Context) {
 	})
 }
 
+func SearchRecipeHandler(c *gin.Context) {
+	tag := c.Query("tag")
+	recipeList := []models.Recipe{}
+	for i, v := range recipes {
+		for _, t := range v.Tags {
+			if strings.EqualFold(t, tag) {
+				recipeList = append(recipeList, recipes[i])
+				break
+			}
+		}
+	}
+	if len(recipeList) == 0 {
+		c.JSON(http.StatusNotFound, gin.H{
+			"error": "No recipes found",
+		})
+	} else {
+		c.JSON(http.StatusOK, recipeList)
+	}
+}
+
 func main() {
 	router := gin.Default()
 	router.POST("/recipes", NewRecipesHandler)
@@ -110,5 +131,6 @@ func main() {
 	router.GET("/recipes/:id", GetRecipesHandler)
 	router.PUT("/recipes/:id", UpdateRecipeHandler)
 	router.DELETE("/recipes/:id", DeleteRecipeHandler)
+	router.GET("/recipes/search/", SearchRecipeHandler)
 	router.Run()
 }

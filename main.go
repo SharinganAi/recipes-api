@@ -27,6 +27,7 @@ func NewRecipesHandler(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"error": err.Error(),
 		})
+		return
 	}
 	recipe.ID = xid.New().String()
 	recipe.PublishdAt = time.Now()
@@ -38,9 +39,54 @@ func ListRecipesHandler(c *gin.Context) {
 	c.JSON(http.StatusOK, recipes)
 }
 
+func GetRecipesHandler(c *gin.Context) {
+	id := c.Param("id")
+	index := -1
+	for i, val := range recipes {
+		if val.ID == id {
+			index = i
+		}
+	}
+	if index == -1 {
+		c.JSON(http.StatusNotFound, gin.H{
+			"error": "recipe not found",
+		})
+		return
+	}
+	c.JSON(http.StatusOK, recipes[index])
+}
+
+// update an existing recipe. check first if Recipe.ID is already present in recipes list.
+// if not present return error else update the the recipe object
+func UpdateRecipeHandler(c *gin.Context) {
+	id := c.Param("id")
+	var recipe models.Recipe
+	if err := c.BindJSON(&recipe); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": err.Error(),
+		})
+	}
+	index := -1
+	for i, val := range recipes {
+		if val.ID == id {
+			index = i
+		}
+	}
+	if index == -1 {
+		c.JSON(http.StatusNotFound, gin.H{
+			"error": "recipe not found",
+		})
+		return
+	}
+	recipes[index] = recipe
+	c.JSON(http.StatusOK, recipe)
+}
+
 func main() {
 	router := gin.Default()
 	router.POST("/recipes", NewRecipesHandler)
 	router.GET("/recipes", ListRecipesHandler)
+	router.GET("/recipes/:id", GetRecipesHandler)
+	router.PUT("/recipes/:id", UpdateRecipeHandler)
 	router.Run()
 }

@@ -1,9 +1,12 @@
 package models
 
+import "time"
+
 type Recipe struct {
-	Name         string   `json:"name"`
-	Tags         []string `json:"tags"`
-	Ingredients  []string `json:"ingredients"`
-	Instructions []string `json:"instructions"`
-	PublishDate  string   `json:"publishedAt"`
+	ID           string    `json:"id"`
+	Name         string    `json:"name"`
+	Tags         []string  `json:"tags"`
+	Ingredients  []string  `json:"ingredients"`
+	Instructions []string  `json:"instructions"`
+	PublishdAt   time.Time `json:"publishedAt"`
 }

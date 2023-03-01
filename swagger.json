@@ -11,9 +11,70 @@
           "recipes"
         ],
         "operationId": "listRecipes"
+      },
+      "post": {
+        "description": "Creates a new recipe",
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "recipes"
+        ],
+        "operationId": "createRecipe"
+      }
+    },
+    "/recipes/search": {
+      "get": {
+        "description": "Search recipes based on tag passed as query",
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "recipes"
+        ],
+        "operationId": "searchRecipe",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "tag of the recipe",
+            "name": "tag",
+            "in": "query",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful operation"
+          },
+          "400": {
+            "description": "user error"
+          },
+          "404": {
+            "description": "Recipe id not found"
+          }
+        }
       }
     },
     "/recipes/{id}": {
+      "get": {
+        "description": "Returns recipe with an ID",
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "recipes"
+        ],
+        "operationId": "GetRecipe",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "ID of the recipe",
+            "name": "id",
+            "in": "path",
+            "required": true
+          }
+        ]
+      },
       "put": {
         "description": "Update an existing recipe",
         "produces": [
@@ -23,6 +84,36 @@
           "recipes"
         ],
         "operationId": "updateRecipe",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "ID of the recipe",
+            "name": "id",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful operation"
+          },
+          "400": {
+            "description": "user error"
+          },
+          "404": {
+            "description": "Recipe id not found"
+          }
+        }
+      },
+      "delete": {
+        "description": "Delete an existing recipe",
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "recipes"
+        ],
+        "operationId": "DeleteRecipe",
         "parameters": [
           {
             "type": "string",

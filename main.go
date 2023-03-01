@@ -39,7 +39,14 @@ func init() {
 	file, _ := ioutil.ReadFile("recipes.json")
 	_ = json.Unmarshal([]byte(file), &recipes)
 }
-
+// swagger:operation POST /recipes recipes createRecipe
+// Creates a new recipe
+// ---
+// produces:
+// - application/json
+// responses:
+// '200':
+//   - description: Successful operation
 func NewRecipesHandler(c *gin.Context) {
 	var recipe models.Recipe
 	if err := c.BindJSON(&recipe); err != nil {
@@ -67,7 +74,22 @@ func ListRecipesHandler(c *gin.Context) {
 	c.JSON(http.StatusOK, recipes)
 }
 
-func GetRecipesHandler(c *gin.Context) {
+// swagger:operation GET /recipes/{id} recipes GetRecipe
+// Returns recipe with an ID
+// ---
+// parameters:
+//   - name: id
+//     in: path
+//     description: ID of the recipe
+//     required: true
+//     type: string
+// produces:
+// - application/json
+// responses:
+// '200':
+//
+//   - description: Successful operation
+func GetRecipeHandler(c *gin.Context) {
 	id := c.Param("id")
 	index := -1
 	for i, val := range recipes {
@@ -103,7 +125,6 @@ func GetRecipesHandler(c *gin.Context) {
 //    description: user error
 //  '404':
 //    description: Recipe id not found
-
 func UpdateRecipeHandler(c *gin.Context) {
 	id := c.Param("id")
 	var recipe models.Recipe
@@ -128,6 +149,25 @@ func UpdateRecipeHandler(c *gin.Context) {
 	c.JSON(http.StatusOK, recipe)
 }
 
+//swagger:operation DELETE /recipes/{id} recipes DeleteRecipe
+//Delete an existing recipe
+//---
+//parameters:
+//   - name: id
+//     in: path
+//     description: ID of the recipe
+//     required: true
+//     type: string
+//
+//produces:
+//   - application/json
+//responses:
+//	'200':
+//    description: Successful operation
+//  '400':
+//    description: user error
+//  '404':
+//    description: Recipe id not found
 func DeleteRecipeHandler(c *gin.Context) {
 	id := c.Param("id")
 	index := -1
@@ -148,6 +188,25 @@ func DeleteRecipeHandler(c *gin.Context) {
 	})
 }
 
+//swagger:operation GET /recipes/search recipes searchRecipe
+//Search recipes based on tag passed as query
+//---
+//parameters:
+//   - name: tag
+//     in: query
+//     description: tag of the recipe
+//     required: true
+//     type: string
+//
+//produces:
+//   - application/json
+//responses:
+//	'200':
+//    description: Successful operation
+//  '400':
+//    description: user error
+//  '404':
+//    description: Recipe id not found
 func SearchRecipeHandler(c *gin.Context) {
 	tag := c.Query("tag")
 	recipeList := []models.Recipe{}
@@ -164,15 +223,14 @@ func SearchRecipeHandler(c *gin.Context) {
 			"error": "No recipes found",
 		})
 	} else {
-		c.JSON(http.StatusOK, recipeList)
-	}
+		c.JSON(http.StatusOK, recipeList)																																																			n	}
 }
 
 func main() {
 	router := gin.Default()
 	router.POST("/recipes", NewRecipesHandler)
 	router.GET("/recipes", ListRecipesHandler)
-	router.GET("/recipes/:id", GetRecipesHandler)
+	router.GET("/recipes/:id", GetRecipeHandler)
 	router.PUT("/recipes/:id", UpdateRecipeHandler)
 	router.DELETE("/recipes/:id", DeleteRecipeHandler)
 	router.GET("/recipes/search/", SearchRecipeHandler)

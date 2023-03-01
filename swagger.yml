@@ -1,0 +1,31 @@
+paths:
+    /recipes:
+        get:
+            description: Returns list of recipes
+            operationId: listRecipes
+            produces:
+                - application/json
+            tags:
+                - recipes
+    /recipes/{id}:
+        put:
+            description: Update an existing recipe
+            operationId: updateRecipe
+            parameters:
+                - description: ID of the recipe
+                  in: path
+                  name: id
+                  required: true
+                  type: string
+            produces:
+                - application/json
+            responses:
+                "200":
+                    description: Successful operation
+                "400":
+                    description: user error
+                "404":
+                    description: Recipe id not found
+            tags:
+                - recipes
+swagger: "2.0"

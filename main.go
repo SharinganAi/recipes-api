@@ -20,8 +20,8 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"net/http"
+	"os"
 	"strings"
 	"time"
 
@@ -36,9 +36,10 @@ var (
 
 func init() {
 	recipes = []models.Recipe{}
-	file, _ := ioutil.ReadFile("recipes.json")
+	file, _ := os.ReadFile("recipes.json")
 	_ = json.Unmarshal([]byte(file), &recipes)
 }
+
 // swagger:operation POST /recipes recipes createRecipe
 // Creates a new recipe
 // ---
@@ -83,6 +84,7 @@ func ListRecipesHandler(c *gin.Context) {
 //     description: ID of the recipe
 //     required: true
 //     type: string
+//
 // produces:
 // - application/json
 // responses:
@@ -106,25 +108,28 @@ func GetRecipeHandler(c *gin.Context) {
 	c.JSON(http.StatusOK, recipes[index])
 }
 
-//swagger:operation PUT /recipes/{id} recipes updateRecipe
-//Update an existing recipe
-//---
-//parameters:
+// Update an existing recipe
+// ---
+// parameters:
 //   - name: id
 //     in: path
 //     description: ID of the recipe
 //     required: true
 //     type: string
 //
-//produces:
+// produces:
 //   - application/json
-//responses:
-//	'200':
-//    description: Successful operation
-//  '400':
-//    description: user error
-//  '404':
-//    description: Recipe id not found
+//
+// responses:
+//
+//		'200':
+//	   description: Successful operation
+//	 '400':
+//	   description: user error
+//	 '404':
+//	   description: Recipe id not found
+//
+//swagger:operation PUT /recipes/{id} recipes updateRecipe
 func UpdateRecipeHandler(c *gin.Context) {
 	id := c.Param("id")
 	var recipe models.Recipe
@@ -149,25 +154,28 @@ func UpdateRecipeHandler(c *gin.Context) {
 	c.JSON(http.StatusOK, recipe)
 }
 
-//swagger:operation DELETE /recipes/{id} recipes DeleteRecipe
-//Delete an existing recipe
-//---
-//parameters:
+// Delete an existing recipe
+// ---
+// parameters:
 //   - name: id
 //     in: path
 //     description: ID of the recipe
 //     required: true
 //     type: string
 //
-//produces:
+// produces:
 //   - application/json
-//responses:
-//	'200':
-//    description: Successful operation
-//  '400':
-//    description: user error
-//  '404':
-//    description: Recipe id not found
+//
+// responses:
+//
+//		'200':
+//	   description: Successful operation
+//	 '400':
+//	   description: user error
+//	 '404':
+//	   description: Recipe id not found
+//
+//swagger:operation DELETE /recipes/{id} recipes DeleteRecipe
 func DeleteRecipeHandler(c *gin.Context) {
 	id := c.Param("id")
 	index := -1
@@ -188,25 +196,28 @@ func DeleteRecipeHandler(c *gin.Context) {
 	})
 }
 
-//swagger:operation GET /recipes/search recipes searchRecipe
-//Search recipes based on tag passed as query
-//---
-//parameters:
+// Search recipes based on tag passed as query
+// ---
+// parameters:
 //   - name: tag
 //     in: query
 //     description: tag of the recipe
 //     required: true
 //     type: string
 //
-//produces:
+// produces:
 //   - application/json
-//responses:
-//	'200':
-//    description: Successful operation
-//  '400':
-//    description: user error
-//  '404':
-//    description: Recipe id not found
+//
+// responses:
+//
+//		'200':
+//	   description: Successful operation
+//	 '400':
+//	   description: user error
+//	 '404':
+//	   description: Recipe id not found
+//
+//swagger:operation GET /recipes/search recipes searchRecipe
 func SearchRecipeHandler(c *gin.Context) {
 	tag := c.Query("tag")
 	recipeList := []models.Recipe{}
@@ -223,7 +234,8 @@ func SearchRecipeHandler(c *gin.Context) {
 			"error": "No recipes found",
 		})
 	} else {
-		c.JSON(http.StatusOK, recipeList)																																																			n	}
+		c.JSON(http.StatusOK, recipeList)
+	}
 }
 
 func main() {

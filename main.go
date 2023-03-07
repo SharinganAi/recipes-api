@@ -22,7 +22,6 @@ import (
 	"log"
 	"os"
 
-	"github.com/99designs/gqlgen/handler"
 	"github.com/SharinganAi/recipes-api/handlers"
 	"github.com/SharinganAi/recipes-api/models"
 	"github.com/SharinganAi/recipes-api/utils"
@@ -38,7 +37,7 @@ var (
 	err               error
 	client            *mongo.Client
 	RecipesCollection *mongo.Collection
-	recipesHandler    handler.RecipesHandler
+	recipesHandler    handlers.RecipesHandler
 )
 
 func init() {

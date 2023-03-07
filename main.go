@@ -18,7 +18,7 @@
 package main
 
 import (
-	"encoding/json"
+	"context"
 	"fmt"
 	"net/http"
 	"os"
@@ -26,18 +26,47 @@ import (
 	"time"
 
 	"github.com/SharinganAi/recipes-api/models"
+	"github.com/SharinganAi/recipes-api/utils"
 	"github.com/gin-gonic/gin"
-	"github.com/rs/xid"
+	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
+	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
+	"go.mongodb.org/mongo-driver/mongo/readpref"
 )
 
 var (
-	recipes []models.Recipe
+	recipes           []models.Recipe
+	ctx               context.Context
+	err               error
+	client            *mongo.Client
+	RecipesCollection *mongo.Collection
 )
 
 func init() {
-	recipes = []models.Recipe{}
-	file, _ := os.ReadFile("recipes.json")
-	_ = json.Unmarshal([]byte(file), &recipes)
+	// recipes = []models.Recipe{}
+	// file, _ := os.ReadFile("recipes.json")
+	// _ = json.Unmarshal([]byte(file), &recipes)
+	ctx := context.Background()
+	client, err := mongo.Connect(ctx, options.Client().ApplyURI(utils.GetMongoURI()))
+	if err != nil {
+		log.Fatal("Error connecting to MongoDB: ", err)
+	}
+	if err = client.Ping(context.TODO(), readpref.Primary()); err != nil {
+		log.Fatal("Error while pinging MongoDB: ", err)
+	}
+	log.Println("Connected to MongoDb.")
+
+	// var listOfRecipes []interface{}
+	// for _, recipe := range recipes {
+	// 	listOfRecipes = append(listOfRecipes, recipe)
+	// }
+	RecipesCollection = client.Database(os.Getenv("MONGO_DATABASE_NAME")).Collection("recipes")
+	// insertManyResult, err := collection.InsertMany(ctx, listOfRecipes)
+	// if err != nil {
+	// 	log.Fatal("Error while inserting recipes in MongoDB:", err)
+	// }
+	// log.Printf("No of records inserted in MongoDB: %d", insertManyResult)
 }
 
 // swagger:operation POST /recipes recipes createRecipe
@@ -56,9 +85,13 @@ func NewRecipesHandler(c *gin.Context) {
 		})
 		return
 	}
-	recipe.ID = xid.New().String()
+	recipe.ID = primitive.NewObjectID()
 	recipe.PublishdAt = time.Now()
-	recipes = append(recipes, recipe)
+	_, err := RecipesCollection.InsertOne(ctx, recipe)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
 	c.JSON(http.StatusOK, recipe)
 }
 
@@ -72,6 +105,21 @@ func NewRecipesHandler(c *gin.Context) {
 //
 //   - description: Successful operation
 func ListRecipesHandler(c *gin.Context) {
+	cur, err := RecipesCollection.Find(ctx, bson.M{})
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+	}
+	defer cur.Close(ctx)
+	recipes := []models.Recipe{}
+	for cur.Next(ctx) {
+		var recipe *models.Recipe
+		err = cur.Decode(&recipe)
+		if err != nil {
+			log.Println("Error while decoding recipe from database", err)
+			continue
+		}
+		recipes = append(recipes, *recipe)
+	}
 	c.JSON(http.StatusOK, recipes)
 }
 
@@ -93,19 +141,17 @@ func ListRecipesHandler(c *gin.Context) {
 //   - description: Successful operation
 func GetRecipeHandler(c *gin.Context) {
 	id := c.Param("id")
-	index := -1
-	for i, val := range recipes {
-		if val.ID == id {
-			index = i
-		}
-	}
-	if index == -1 {
-		c.JSON(http.StatusNotFound, gin.H{
-			"error": "recipe not found",
-		})
+	objId, _ := primitive.ObjectIDFromHex(id)
+	res := RecipesCollection.FindOne(ctx, bson.M{
+		"_id": objId,
+	})
+	var recipe *models.Recipe
+	err := res.Decode(&recipe)
+	if err != nil {
+		c.JSON(http.StatusNotFound, []models.Recipe{})
 		return
 	}
-	c.JSON(http.StatusOK, recipes[index])
+	c.JSON(http.StatusOK, recipe)
 }
 
 // Update an existing recipe
@@ -138,20 +184,21 @@ func UpdateRecipeHandler(c *gin.Context) {
 			"error": err.Error(),
 		})
 	}
-	index := -1
-	for i, val := range recipes {
-		if val.ID == id {
-			index = i
-		}
-	}
-	if index == -1 {
-		c.JSON(http.StatusNotFound, gin.H{
-			"error": "recipe not found",
-		})
+	objId, _ := primitive.ObjectIDFromHex(id)
+	_, err := RecipesCollection.UpdateOne(ctx, bson.M{
+		"_id": objId,
+	}, bson.D{{Key: "$set", Value: bson.D{
+		{Key: "name", Value: recipe.Name},
+		{Key: "tags", Value: recipe.Tags},
+		{Key: "ingredients", Value: recipe.Ingredients},
+		{Key: "instructions", Value: recipe.Instructions},
+	}}})
+	if err != nil {
+		log.Println("Error while updating recipe", err.Error())
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
-	recipes[index] = recipe
-	c.JSON(http.StatusOK, recipe)
+	c.JSON(http.StatusOK, gin.H{"Message": "Recipe updated successfully"})
 }
 
 // Delete an existing recipe
@@ -178,19 +225,14 @@ func UpdateRecipeHandler(c *gin.Context) {
 //swagger:operation DELETE /recipes/{id} recipes DeleteRecipe
 func DeleteRecipeHandler(c *gin.Context) {
 	id := c.Param("id")
-	index := -1
-	for i, val := range recipes {
-		if val.ID == id {
-			index = i
-		}
-	}
-	if index == -1 {
-		c.JSON(http.StatusNotFound, gin.H{
-			"error": "recipe not found",
-		})
+	objId, _ := primitive.ObjectIDFromHex(id)
+	_, err := RecipesCollection.DeleteOne(ctx, bson.M{
+		"_id": objId,
+	})
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
-	recipes = append(recipes[:index], recipes[index+1:]...)
 	c.JSON(http.StatusOK, gin.H{
 		"Message": fmt.Sprintf("recipe with id %s deleted", id),
 	})
@@ -220,31 +262,37 @@ func DeleteRecipeHandler(c *gin.Context) {
 //swagger:operation GET /recipes/search recipes searchRecipe
 func SearchRecipeHandler(c *gin.Context) {
 	tag := c.Query("tag")
-	recipeList := []models.Recipe{}
-	for i, v := range recipes {
-		for _, t := range v.Tags {
-			if strings.EqualFold(t, tag) {
-				recipeList = append(recipeList, recipes[i])
-				break
-			}
-		}
+	cur, err := RecipesCollection.Find(ctx, bson.M{"tags": bson.M{"$in": []string{tag, strings.Title(tag), strings.ToLower(tag), strings.ToUpper(tag)}}})
+	defer cur.Close(ctx)
+	if err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
 	}
-	if len(recipeList) == 0 {
+	recipes := []models.Recipe{}
+	for cur.Next(ctx) {
+		var recipe *models.Recipe
+		err = cur.Decode(&recipe)
+		if err != nil {
+			log.Println("Error while decoding recipe from database while searching", tag, ": ", err)
+			continue
+		}
+		recipes = append(recipes, *recipe)
+	}
+	if len(recipes) == 0 {
 		c.JSON(http.StatusNotFound, gin.H{
 			"error": "No recipes found",
 		})
 	} else {
-		c.JSON(http.StatusOK, recipeList)
+		c.JSON(http.StatusOK, recipes)
 	}
 }
 
 func main() {
 	router := gin.Default()
-	router.POST("/recipes", NewRecipesHandler)
-	router.GET("/recipes", ListRecipesHandler)
-	router.GET("/recipes/:id", GetRecipeHandler)
-	router.PUT("/recipes/:id", UpdateRecipeHandler)
-	router.DELETE("/recipes/:id", DeleteRecipeHandler)
+	router.POST("/recipes/", NewRecipesHandler)
+	router.GET("/recipes/", ListRecipesHandler)
+	router.GET("/recipes/:id/", GetRecipeHandler)
+	router.PUT("/recipes/:id/", UpdateRecipeHandler)
+	router.DELETE("/recipes/:id/", DeleteRecipeHandler)
 	router.GET("/recipes/search/", SearchRecipeHandler)
 	router.Run()
 }

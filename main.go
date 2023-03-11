@@ -19,25 +19,22 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"os"
 
 	"github.com/SharinganAi/recipes-api/handlers"
-	"github.com/SharinganAi/recipes-api/models"
 	"github.com/SharinganAi/recipes-api/utils"
 	"github.com/gin-gonic/gin"
+	"github.com/go-redis/redis/v8"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 	"go.mongodb.org/mongo-driver/mongo/readpref"
 )
 
 var (
-	recipes           []models.Recipe
-	ctx               context.Context
-	err               error
-	client            *mongo.Client
 	RecipesCollection *mongo.Collection
-	recipesHandler    handlers.RecipesHandler
+	recipesHandler    *handlers.RecipesHandler
 )
 
 func init() {
@@ -53,12 +50,21 @@ func init() {
 		log.Fatal("Error while pinging MongoDB: ", err)
 	}
 	log.Println("Connected to MongoDb.")
+	log.Println("Connecting to Redis")
+	redisAddr := fmt.Sprintf("%s:%s", os.Getenv("REDIS_SERVER"), os.Getenv("REDIS_PORT"))
+	redisClient := redis.NewClient(&redis.Options{
+		Addr:     redisAddr,
+		Password: "",
+		DB:       0,
+	})
+	status := redisClient.Ping(ctx)
+	fmt.Println("Redis connection status", status)
 	// var listOfRecipes []interface{}
 	// for _, recipe := range recipes {
 	// 	listOfRecipes = append(listOfRecipes, recipe)
 	// }
 	RecipesCollection = client.Database(os.Getenv("MONGO_DATABASE_NAME")).Collection("recipes")
-	recipesHandler = handlers.NewRecipesHandler(ctx, RecipesCollection)
+	recipesHandler = handlers.NewRecipesHandler(ctx, RecipesCollection, redisClient)
 	// insertManyResult, err := collection.InsertMany(ctx, listOfRecipes)
 	// if err != nil {
 	// 	log.Fatal("Error while inserting recipes in MongoDB:", err)
@@ -74,5 +80,5 @@ func main() {
 	router.PUT("/recipes/:id/", recipesHandler.UpdateRecipeHandler)
 	router.DELETE("/recipes/:id/", recipesHandler.DeleteRecipeHandler)
 	router.GET("/recipes/search/", recipesHandler.SearchRecipeHandler)
-	router.Run()
+	router.Run(":8080")
 }

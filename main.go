@@ -24,6 +24,7 @@ import (
 	"os"
 
 	"github.com/SharinganAi/recipes-api/handlers"
+	"github.com/SharinganAi/recipes-api/middlewares"
 	"github.com/SharinganAi/recipes-api/utils"
 	"github.com/gin-gonic/gin"
 	"github.com/go-redis/redis/v8"
@@ -35,6 +36,7 @@ import (
 var (
 	RecipesCollection *mongo.Collection
 	recipesHandler    *handlers.RecipesHandler
+	authHandler       *handlers.AuthHandler
 )
 
 func init() {
@@ -65,6 +67,7 @@ func init() {
 	// }
 	RecipesCollection = client.Database(os.Getenv("MONGO_DATABASE_NAME")).Collection("recipes")
 	recipesHandler = handlers.NewRecipesHandler(ctx, RecipesCollection, redisClient)
+	authHandler = &handlers.AuthHandler{}
 	// insertManyResult, err := collection.InsertMany(ctx, listOfRecipes)
 	// if err != nil {
 	// 	log.Fatal("Error while inserting recipes in MongoDB:", err)
@@ -74,11 +77,19 @@ func init() {
 
 func main() {
 	router := gin.Default()
-	router.POST("/recipes/", recipesHandler.NewRecipesHandler)
-	router.GET("/recipes/", recipesHandler.ListRecipesHandler)
-	router.GET("/recipes/:id/", recipesHandler.GetRecipeHandler)
-	router.PUT("/recipes/:id/", recipesHandler.UpdateRecipeHandler)
-	router.DELETE("/recipes/:id/", recipesHandler.DeleteRecipeHandler)
-	router.GET("/recipes/search/", recipesHandler.SearchRecipeHandler)
-	router.Run(":8080")
+	prefixRouter := router.Group("/api/v0")
+	//Make endpoints with authorized credentials related to recipes and defined prefix group
+	prefixRouter.GET("/recipes/", recipesHandler.ListRecipesHandler)
+	prefixRouter.POST("/signin/", authHandler.SignInHandler)
+	authorized := prefixRouter.Group("/")
+	authorized.Use(middlewares.AuthMiddlewareNew())
+	authorized.POST("recipes/", recipesHandler.NewRecipesHandler)
+	authorized.GET("recipes/:id/", recipesHandler.GetRecipeHandler)
+	authorized.PUT("recipes/:id/", recipesHandler.UpdateRecipeHandler)
+	authorized.DELETE("recipes/:id/", recipesHandler.DeleteRecipeHandler)
+	authorized.GET("recipes/search/", recipesHandler.SearchRecipeHandler)
+
+	//Run the web server
+	port := os.Getenv("SERVER_PORT")
+	router.Run(":" + port)
 }

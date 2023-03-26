@@ -7,9 +7,40 @@ paths:
                 - application/json
             tags:
                 - recipes
+        post:
+            description: Creates a new recipe
+            operationId: createRecipe
+            produces:
+                - application/json
+            tags:
+                - recipes
     /recipes/{id}:
+        delete:
+            operationId: DeleteRecipe
+            parameters:
+                - description: ID of the recipe
+                  in: path
+                  name: id
+                  required: true
+                  type: string
+            produces:
+                - application/json
+            tags:
+                - recipes
+        get:
+            description: Successful operation
+            operationId: GetRecipe
+            parameters:
+                - description: ID of the recipe
+                  in: path
+                  name: id
+                  required: true
+                  type: string
+            produces:
+                - application/json
+            tags:
+                - recipes
         put:
-            description: Update an existing recipe
             operationId: updateRecipe
             parameters:
                 - description: ID of the recipe
@@ -19,13 +50,42 @@ paths:
                   type: string
             produces:
                 - application/json
+            tags:
+                - recipes
+    /refresh:
+        post:
+            description: Get new token in exchange for an old one
+            operationId: refresh
+            produces:
+                - application/json
             responses:
                 "200":
                     description: Successful operation
                 "400":
-                    description: user error
-                "404":
-                    description: Recipe id not found
+                    description: Token is new and doesn't need a refresh
+                "401":
+                    description: Invalid credentials
             tags:
-                - recipes
+                - auth
+    /signin:
+        post:
+            description: Login with username and password
+            operationId: signIn
+            produces:
+                - application/json
+            responses:
+                "200":
+                    description: Successful operation
+                "401":
+                    description: Unauthorized
+            tags:
+                - auth
+    /signup:
+        post:
+            description: signup a new user
+            operationId: signup
+            produces:
+                - application/json
+            tags:
+                - auth
 swagger: "2.0"

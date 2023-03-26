@@ -23,41 +23,9 @@
         "operationId": "createRecipe"
       }
     },
-    "/recipes/search": {
-      "get": {
-        "description": "Search recipes based on tag passed as query",
-        "produces": [
-          "application/json"
-        ],
-        "tags": [
-          "recipes"
-        ],
-        "operationId": "searchRecipe",
-        "parameters": [
-          {
-            "type": "string",
-            "description": "tag of the recipe",
-            "name": "tag",
-            "in": "query",
-            "required": true
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Successful operation"
-          },
-          "400": {
-            "description": "user error"
-          },
-          "404": {
-            "description": "Recipe id not found"
-          }
-        }
-      }
-    },
     "/recipes/{id}": {
       "get": {
-        "description": "Returns recipe with an ID",
+        "description": "Successful operation",
         "produces": [
           "application/json"
         ],
@@ -76,7 +44,6 @@
         ]
       },
       "put": {
-        "description": "Update an existing recipe",
         "produces": [
           "application/json"
         ],
@@ -92,21 +59,9 @@
             "in": "path",
             "required": true
           }
-        ],
-        "responses": {
-          "200": {
-            "description": "Successful operation"
-          },
-          "400": {
-            "description": "user error"
-          },
-          "404": {
-            "description": "Recipe id not found"
-          }
-        }
+        ]
       },
       "delete": {
-        "description": "Delete an existing recipe",
         "produces": [
           "application/json"
         ],
@@ -122,18 +77,62 @@
             "in": "path",
             "required": true
           }
+        ]
+      }
+    },
+    "/refresh": {
+      "post": {
+        "description": "Get new token in exchange for an old one",
+        "produces": [
+          "application/json"
         ],
+        "tags": [
+          "auth"
+        ],
+        "operationId": "refresh",
         "responses": {
           "200": {
             "description": "Successful operation"
           },
           "400": {
-            "description": "user error"
+            "description": "Token is new and doesn't need a refresh"
           },
-          "404": {
-            "description": "Recipe id not found"
+          "401": {
+            "description": "Invalid credentials"
           }
         }
+      }
+    },
+    "/signin": {
+      "post": {
+        "description": "Login with username and password",
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "auth"
+        ],
+        "operationId": "signIn",
+        "responses": {
+          "200": {
+            "description": "Successful operation"
+          },
+          "401": {
+            "description": "Unauthorized"
+          }
+        }
+      }
+    },
+    "/signup": {
+      "post": {
+        "description": "signup a new user",
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "auth"
+        ],
+        "operationId": "signup"
       }
     }
   }

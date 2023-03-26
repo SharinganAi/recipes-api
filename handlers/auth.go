@@ -39,6 +39,20 @@ type JWTOutput struct {
 	Expires time.Time `json:"expires"`
 }
 
+// swagger:operation POST /signin auth signIn
+// Login with username and password
+// ---
+// produces:
+// - application/json
+// responses:
+//
+//	 '200':
+//
+//		 description: Successful operation
+//
+//	 '401':
+//
+//		 description: Unauthorized
 func (handler *AuthHandler) SignInHandler(c *gin.Context) {
 	var user models.User
 	var userResponse models.UserResponse
@@ -89,6 +103,24 @@ func (handler *AuthHandler) SignInHandler(c *gin.Context) {
 	c.JSON(http.StatusOK, JWTOutput)
 }
 
+// swagger:operation POST /refresh auth refresh
+// Get new token in exchange for an old one
+// ---
+// produces:
+// - application/json
+// responses:
+//
+//	 '200':
+//
+//		 description: Successful operation
+//
+//	 '400':
+//
+//		 description: Token is new and doesn't need a refresh
+//
+//	 '401':
+//
+//		 description: Invalid credentials
 func (handler *AuthHandler) Refreshhandler(c *gin.Context) {
 	tokenValue := c.GetHeader("Authorization")
 	claims := &Claims{}
@@ -120,6 +152,20 @@ func (handler *AuthHandler) Refreshhandler(c *gin.Context) {
 	c.JSON(http.StatusOK, jwtOutput)
 }
 
+// swagger:operation POST /signup auth signup
+// signup a new user
+// ---
+// produces:
+// - application/json
+// responses:
+//
+//	'200':
+//
+//	 description: Successful operation
+//
+//	'400':
+//
+//	 description: User Id already exists
 func (handler *AuthHandler) SignupHandler(c *gin.Context) {
 	var user models.User
 	//check parameters binding in request object

@@ -117,7 +117,7 @@ func (h *RecipesHandler) ListRecipesHandler(c *gin.Context) {
 // responses:
 // '200':
 //
-//   - description: Successful operation
+//	description: Successful operation
 func (h *RecipesHandler) GetRecipeHandler(c *gin.Context) {
 	id := c.Param("id")
 	objId, _ := primitive.ObjectIDFromHex(id)
@@ -133,7 +133,7 @@ func (h *RecipesHandler) GetRecipeHandler(c *gin.Context) {
 	c.JSON(http.StatusOK, recipe)
 }
 
-// Update an existing recipe
+// swagger:operation PUT /recipes/{id} recipes updateRecipe
 // ---
 // parameters:
 //   - name: id
@@ -147,14 +147,12 @@ func (h *RecipesHandler) GetRecipeHandler(c *gin.Context) {
 //
 // responses:
 //
-//		'200':
-//	   description: Successful operation
-//	 '400':
-//	   description: user error
-//	 '404':
-//	   description: Recipe id not found
-//
-//swagger:operation PUT /recipes/{id} recipes updateRecipe
+//	'200':
+//	  description: Successful operation
+//	'400':
+//	  description: user error
+//	'404':
+//	  description: Recipe id not found
 func (h *RecipesHandler) UpdateRecipeHandler(c *gin.Context) {
 	id := c.Param("id")
 	var recipe models.Recipe
@@ -180,7 +178,7 @@ func (h *RecipesHandler) UpdateRecipeHandler(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"Message": "Recipe updated successfully"})
 }
 
-// Delete an existing recipe
+// swagger:operation DELETE /recipes/{id} recipes DeleteRecipe
 // ---
 // parameters:
 //   - name: id
@@ -194,14 +192,12 @@ func (h *RecipesHandler) UpdateRecipeHandler(c *gin.Context) {
 //
 // responses:
 //
-//		'200':
-//	   description: Successful operation
-//	 '400':
-//	   description: user error
-//	 '404':
-//	   description: Recipe id not found
-//
-//swagger:operation DELETE /recipes/{id} recipes DeleteRecipe
+//	'200':
+//	 description: Successful operation
+//	'400':
+//	 description: user error
+//	'404':
+//	 description: Recipe id not found
 func (h *RecipesHandler) DeleteRecipeHandler(c *gin.Context) {
 	id := c.Param("id")
 	objId, _ := primitive.ObjectIDFromHex(id)
@@ -217,7 +213,6 @@ func (h *RecipesHandler) DeleteRecipeHandler(c *gin.Context) {
 	})
 }
 
-// Search recipes based on tag passed as query
 // ---
 // parameters:
 //   - name: tag
@@ -231,14 +226,12 @@ func (h *RecipesHandler) DeleteRecipeHandler(c *gin.Context) {
 //
 // responses:
 //
-//		'200':
-//	   description: Successful operation
-//	 '400':
-//	   description: user error
-//	 '404':
-//	   description: Recipe id not found
-//
-//swagger:operation GET /recipes/search recipes searchRecipe
+//	'200':
+//	 description: Successful operation
+//	'400':
+//	 description: user error
+//	'404':
+//	 description: Recipe id not found
 func (h *RecipesHandler) SearchRecipeHandler(c *gin.Context) {
 	tag := c.Query("tag")
 	cur, err := h.collection.Find(h.ctx, bson.M{"tags": bson.M{"$in": []string{tag, strings.ToUpperSpecial(unicode.SpecialCase{}, tag), strings.ToLower(tag), strings.ToUpper(tag)}}})

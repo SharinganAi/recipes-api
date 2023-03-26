@@ -8,6 +8,13 @@
 //	Version: 1.0.0
 //	Contact: Dilip Kumar Singh<dilipkr.18@gmail.com> https://google.com
 //
+// SecurityDefinitions:
+// api_key:
+//
+//	 type: apiKey
+//		name: Authorization
+//		in: header
+//
 // Consumes:
 //   - application/json
 //

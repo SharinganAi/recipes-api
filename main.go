@@ -37,6 +37,7 @@ var (
 	RecipesCollection *mongo.Collection
 	recipesHandler    *handlers.RecipesHandler
 	authHandler       *handlers.AuthHandler
+	UsersCollection   *mongo.Collection
 )
 
 func init() {
@@ -66,8 +67,9 @@ func init() {
 	// 	listOfRecipes = append(listOfRecipes, recipe)
 	// }
 	RecipesCollection = client.Database(os.Getenv("MONGO_DATABASE_NAME")).Collection("recipes")
+	UsersCollection = client.Database(os.Getenv("MONGO_DATABASE_NAME")).Collection("users")
 	recipesHandler = handlers.NewRecipesHandler(ctx, RecipesCollection, redisClient)
-	authHandler = &handlers.AuthHandler{}
+	authHandler = handlers.NewAuthHandler(ctx, UsersCollection)
 	// insertManyResult, err := collection.InsertMany(ctx, listOfRecipes)
 	// if err != nil {
 	// 	log.Fatal("Error while inserting recipes in MongoDB:", err)
@@ -81,6 +83,7 @@ func main() {
 	//Make endpoints with authorized credentials related to recipes and defined prefix group
 	prefixRouter.GET("/recipes/", recipesHandler.ListRecipesHandler)
 	prefixRouter.POST("/signin/", authHandler.SignInHandler)
+	prefixRouter.POST("/signup/", authHandler.SignupHandler)
 	authorized := prefixRouter.Group("/")
 	authorized.Use(middlewares.AuthMiddlewareNew())
 	authorized.POST("recipes/", recipesHandler.NewRecipesHandler)
@@ -88,8 +91,14 @@ func main() {
 	authorized.PUT("recipes/:id/", recipesHandler.UpdateRecipeHandler)
 	authorized.DELETE("recipes/:id/", recipesHandler.DeleteRecipeHandler)
 	authorized.GET("recipes/search/", recipesHandler.SearchRecipeHandler)
+	authorized.POST("refresh/", authHandler.Refreshhandler)
 
 	//Run the web server
-	port := os.Getenv("SERVER_PORT")
-	router.Run(":" + port)
+	if os.Getenv("IS_SSL") == "true" {
+		port := os.Getenv("SSL_PORT")
+		router.RunTLS(":"+port, "certs/localhost.crt", "certs/localhost.key")
+	} else {
+		port := os.Getenv("SERVER_PORT")
+		router.Run(":" + port)
+	}
 }

@@ -4,3 +4,9 @@ type User struct {
 	UserName string `json:"user_name"`
 	Password string `json:"password"`
 }
+
+type UserResponse struct {
+	Id       string `json:"_id"`
+	UserName string `json:"user_name"`
+	Password string `json:"password"`
+}

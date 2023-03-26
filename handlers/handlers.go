@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"strings"
 	"time"
+	"unicode"
 
 	"github.com/SharinganAi/recipes-api/models"
 	"github.com/gin-gonic/gin"
@@ -240,8 +241,10 @@ func (h *RecipesHandler) DeleteRecipeHandler(c *gin.Context) {
 //swagger:operation GET /recipes/search recipes searchRecipe
 func (h *RecipesHandler) SearchRecipeHandler(c *gin.Context) {
 	tag := c.Query("tag")
-	cur, err := h.collection.Find(h.ctx, bson.M{"tags": bson.M{"$in": []string{tag, strings.Title(tag), strings.ToLower(tag), strings.ToUpper(tag)}}})
-	defer cur.Close(h.ctx)
+	cur, err := h.collection.Find(h.ctx, bson.M{"tags": bson.M{"$in": []string{tag, strings.ToUpperSpecial(unicode.SpecialCase{}, tag), strings.ToLower(tag), strings.ToUpper(tag)}}})
+	defer func() {
+		err = cur.Close(h.ctx)
+	}()
 	if err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
 	}
@@ -262,4 +265,8 @@ func (h *RecipesHandler) SearchRecipeHandler(c *gin.Context) {
 	} else {
 		c.JSON(http.StatusOK, recipes)
 	}
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+	}
+
 }
